@@ -1,0 +1,3 @@
+[submodule "bing"]
+	path = bing
+	url = git@github.com:oy3o/bing.git
