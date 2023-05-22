@@ -1,5 +1,5 @@
 # AI Chat Mode and Tasks Chain with Python API and Websocket API and Terminal
-call all ai models under oy3opy.ai through chat mode, one times ask and tasks chain.
+call all ai models under `oy3opy.ai` through chat mode, one times ask and tasks chain with Python API and Websocket API and Terminal
 ## Python API
 python api to access multiple with chat mode or not
 ### chat mode
@@ -69,9 +69,43 @@ print(ResponseChain)
 ```
 
 ## Websocket API
+why not http? you can do it, but websocket is more suitable for stream and event.
+### server
+```py
+# server
+from oy3opy.ai.websocket import listen
+import asyncio
+import nest_asyncio
+nest_asyncio.apply()
+asyncio.run(listen('127.0.0.1', 8443, proxies = {
+    'http://': 'http://127.0.0.1:1081',
+    'https://': 'http://127.0.0.1:1081',
+}))
 ```
-come soon...
+### demo client of python
+```py
+# client test
+from oy3opy.utils.string import tojson
+from oy3opy.utils.file import read_text
+from websockets.sync.client import connect
+import json
+
+cookie = dict([(c['name'], c['value']) for c in json.loads(read_text('cookie.json'))])
+
+ws = connect("ws://127.0.0.1:8443")
+
+ws.send(tojson({'id':'IdOfThisAi', 'model':'bing','cookie':cookie,'prompt':'hello'}))
+ws.send(tojson({'id':'IdOfThisAi', 'prompt':'how are you'}))
+
+ws.send(tojson({'model':'bing','cookie':cookie,'prompt':'hello'}))
+while True:
+    message = json.loads(ws.recv())
+    if message['type'] == 'message': # error | event | mesaage
+        print(message['message'], end='', flush=True)
+    else:
+        print(message)
 ```
+
 ## Terminal command
 ```
 come soon...

@@ -1,6 +1,10 @@
 from oy3opy.utils.task import doneQueue, AsyncTask
-from oy3opy.ai.bing import Model as bing
+from oy3opy.ai.bing import Model as bing, events as bing_events
 from .model import AI
+
+def Events(model:str):
+    if model == 'bing':
+        return bing_events
 
 def Model(model:str):
     if model == 'bing':
@@ -41,9 +45,9 @@ async def exec(model:str, prompt:str, context='', _config = config):
         _config.bing.listeners,
         _config.bing.proxies,
     ))
-    if ai:
-        async for chunk in ai.exec({'context': context, 'prompt': prompt}):
-            yield chunk
+    async for chunk in ai.exec({'context': context, 'prompt': prompt}):
+        yield chunk
+    await ai.close()
 
 async def exec_once(model:str, prompt:str, context='', _config = config):
     response = ''

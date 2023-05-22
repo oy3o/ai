@@ -1,0 +1,7 @@
+certifi
+httpx
+nest_asyncio
+websockets
+typer
+windows-curses; platform_system == 'Windows'
+oy3opy @ git+https://github.com/oy3o/oy3opy
