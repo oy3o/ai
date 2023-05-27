@@ -6,8 +6,8 @@ import json
 
 
 _proxies = {}
-async def listen(addr:str, port:int, proxies = {}):
-    _proxies.update(proxies)
+async def listen(addr:str, port:int, proxy = None):
+    _proxies.update({_: proxy for _ in ['http://','https://']} if proxy else {})
     while True:
         try:
             async with serve(handler, addr, port):

@@ -7,16 +7,14 @@ you can use api as chat mode ( stream or one message), with chat context.
 ```py
 from oy3opy.ai import Chat
 from oy3opy.ai.bing import events
-from oy3opy.utils.file import read_text
+from oy3opy.utils.file import io
 import asyncio
 import json
 
-cookie = dict([(c['name'], c['value']) for c in json.loads(read_text('cookie.json'))])
+with io('cookie.json') as f:
+    cookie = dict([(c['name'], c['value']) for c in json.load(f)])
 listeners = dict.fromkeys(events, print)
-proxies = {
-    'http://': 'http://127.0.0.1:1081',
-    'https://': 'http://127.0.0.1:1081',
-}
+proxy = 'http://127.0.0.1:1081'
 
 async def main():
     chat = Chat('bing', cookie, listeners, proxies)
@@ -34,19 +32,18 @@ you can use api without chat context
 ```py
 from oy3opy.ai import config, exec, Config, exec_once
 
-config.bing.cookie = cookie
-config.bing.listeners = listeners
-config.bing.proxies = proxies
+# default config
+config.cookie =  cookie
+config.listener = listeners
+config.proxy = proxies
 # stream
-async for chunk in exec('bing', 'hello', context=''):
+async for chunk in exec('hello', context=''):
     print(chunk, end='', flush=True)
 # one message with special config, all function can use special config
-print(await exec_once('bing', 'hello', '', Config({
-    'bing':{
-        'cookie': cookie,
-        'listeners': listeners,
-        'proxies': proxies,
-    }
+print(await exec_once('hello', None, 'bing', Config({
+    'cookies': {'bing': cookie},
+    'listeners': {'bing': listeners},
+    'proxies': {'bing': proxies},
 })))
 ```
 ### Tasks Chain
@@ -54,9 +51,10 @@ all function has stream version and one message version
 ```py
 from oy3opy.ai import execTasksChain, execTasksChain_once, config
 
-config.bing.cookie = cookie
-config.bing.listeners = listeners
-config.bing.proxies = proxies
+# bing default config
+config.cookies['bing'] =  cookie
+config.listeners['bing'] = listeners
+config.proxies['bing'] = proxies
 # tasks stream version
 for response in execTasks([{'model':'bing', 'prompt':'What is Goldbach Conjecture 1+1'},{'model':'bing', 'prompt':'What is Peano axioms 1+1'}]):
     print(response)
@@ -86,11 +84,12 @@ asyncio.run(listen('127.0.0.1', 8443, proxies = {
 ```py
 # client test
 from oy3opy.utils.string import tojson
-from oy3opy.utils.file import read_text
+from oy3opy.utils.file import io
 from websockets.sync.client import connect
 import json
 
-cookie = dict([(c['name'], c['value']) for c in json.loads(read_text('cookie.json'))])
+with io('cookie.json') as f:
+    cookie = dict([(c['name'], c['value']) for c in json.load(f)])
 
 ws = connect("ws://127.0.0.1:8443")
 
@@ -100,13 +99,47 @@ ws.send(tojson({'id':'IdOfThisAi', 'prompt':'how are you'}))
 ws.send(tojson({'model':'bing','cookie':cookie,'prompt':'hello'}))
 while True:
     message = json.loads(ws.recv())
-    if message['type'] == 'message': # error | event | mesaage
+    if message['type'] == 'message': # error | event | message
         print(message['message'], end='', flush=True)
     else:
         print(message)
 ```
 
 ## Terminal command
+### commandline
+`app 'prompt' [option]` ask one question then get a stream print answer
 ```
-come soon...
+    --model   'bing'
+    --context 'context'
+    --cookie  'path/your/cookie'
+    --proxy   'http://127.0.0.1:1081'
+    --config  'path/your/config'
+    --loads   'path/your/save'
+```
+
+### interactive cli
+`app --config 'path/your/config'` just without `prompt` then you can access interactive cli
+```
+    command      │    description
+─────────────────────────────────────────────────────────────
+    exit         │    exit app
+    chat NAME    │    start a chat
+    task NAME    │    start a task
+    view NUM     │    show details of message
+    edit NUM     │    edit json of message
+
+─────────────────────────────────────────────────────────────
+    shortcut     │    description
+─────────────────────────────────────────────────────────────
+    Ctrl+A       │    cursor to start
+    Ctrl+E       │    cursor to end
+    Ctrl+X       │    clean all content
+    Ctrl+Z       │    resotre pre action
+    Ctrl+C       │    copy all content to clipboard
+    Ctrl+V       │    paste from your clipboard
+    Esc          │    exit edit without change
+    Ctrl+D       │    stop edit with change
+
+let's try to first chat, enter 'chat help' to access interactive guide
+
 ```

@@ -1,6 +1,6 @@
-from oy3opy.utils.task import doneQueue, AsyncTask
+from oy3opy.utils.task import doneQueue, Task
 from oy3opy.ai.bing import Model as bing, events as bing_events
-from .model import AI
+from .model import *
 
 def Events(model:str):
     if model == 'bing':
@@ -12,8 +12,8 @@ def Model(model:str):
     return None
 
 class Chat:
-    def __init__(self, model, cookie, listeners, proxies):
-        self.ai = AI(Model(model)(cookie, listeners, proxies))
+    def __init__(self, model, cookie, listeners, proxy):
+        self.ai = AI(Model(model)(cookie, listeners, {_: proxy for _ in ['http://','https://']} if proxy else {}))
     async def update(self, context):
         await self.ai.model._update(context)
     async def send(self, message):
@@ -27,36 +27,49 @@ class Chat:
     async def close(self):
         await self.ai.close()
 
-class BingConfig:
-    def __init__(self, data={}):
-        self.cookie = (data and data.get('cookie')) or {}
-        self.listeners = (data and data.get('listeners')) or {}
-        self.proxies = (data and data.get('proxies')) or {}
+class _Config:
+    def __init__(self, data:dict[str,dict or str]={}):
+        self.model:str = data.get('model') or 'bing'
+        self.context:str = data.get('context') or ''
+        self.cookie:dict = data.get('cookie') or {}
+        self.proxy:str = data.get('proxy') or {}
+        self.contexts:dict[str,str] = data.get('contexts') or {}
+        self.cookies:dict[str,str]= data.get('cookies') or {}
+        self.proxies:dict[str,str] = data.get('proxies') or {}
+        self.listeners:dict[str,dict] = data.get('listeners') or {}
 
-class Config:
-    def __init__(self, data={}):
-        self.bing = BingConfig(data.get('bing'))
+class Config(_Config):
+    def __init__(self, data:dict[str,dict or str]={}):
+        self.real = _Config(data)
+
+    def __getattribute__(self, name):
+        proxy = self.proxies.get(name) or self.proxy
+        return getattr(self.real, name, {
+            'model': name,
+            'context': self.contexts.get(name) or self.context,
+            'cookie': self.cookies.get(name) or self.cookie,
+            'proxies': {_: proxy for _ in ['http://','https://']} if proxy else {},
+            'listeners': self.listeners.get(name) or {},
+        })
 
 config = Config()
 
-async def exec(model:str, prompt:str, context='', _config = config):
-    ai = AI(Model(model)(
-        _config.bing.cookie,
-        _config.bing.listeners,
-        _config.bing.proxies,
-    ))
-    async for chunk in ai.exec({'context': context, 'prompt': prompt}):
+async def exec(prompt:str, context:str=None, model:str = 'bing', _config:Config = None):
+    c:dict = getattr(config, model)
+    c.update(getattr(_config, model))
+    ai = AI(Model(model)(c['cookie'], c['listeners'], c['proxies']))
+    async for chunk in ai.exec({'context': c['context'] if context is None else context, 'prompt': prompt}):
         yield chunk
     await ai.close()
 
-async def exec_once(model:str, prompt:str, context='', _config = config):
+async def exec_once(prompt:str, context:str=None, model:str = 'bing', _config:Config = None):
     response = ''
-    async for chunk in exec(model, prompt, context, _config):
+    async for chunk in exec(prompt, context, model, _config):
         response += chunk
     return response
 
 def execTasks(tasks, _config = config):
-    for response in doneQueue([(task['model'], AsyncTask(exec_once,(task['model'], task['prompt'], task.get('context'), _config))) for task in tasks]):
+    for response in doneQueue([(task, Task(exec_once,(task['prompt'], task.get('context'), task['model'], _config))) for task in tasks]):
         yield response
 
 def execTasks_once(tasks, _config = config):
@@ -68,13 +81,13 @@ def execTasksChain(chain, _config = config):
         for task in tasks:
             task['context'] = context + (task['context'] if task.get('context') else '')
         return tasks
-    
+
     def parseContext(node):
         context = ''
         for (ai, response) in node:
             context += f'[{ai}]: {response}\n[/${ai}]\n'
         return context
-    
+
     for tasks in chain:
         node = execTasks_once(update(tasks), _config)
         context = parseContext(node)

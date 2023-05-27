@@ -1,6 +1,8 @@
+from oy3opy import *
 from oy3opy.utils.string import errString
 
-class Model():
+@subscribe()
+class Model(Interface):
     def __init__(self, cookie, listeners, proxies):
         self.cookie = cookie
         self.listeners = listeners
@@ -9,13 +11,8 @@ class Model():
         self.chat = None
         self._init()
 
-    def dispatch(self, event, payload:dict={}):
-        if event in self.listeners:
-            payload.update({'event': event})
-            self.listeners[event](payload)
-
     def error(self, action:str, e:Exception):
-        self.dispatch('error', {
+        self.trigger('error', {
             'action': action,
             'message': errString(e),
         })
@@ -45,16 +42,19 @@ class Model():
         try:
             await self.close()
             self.chat = False
-            self.listeners = {}
         except Exception as e:
             self.error('close', e)
 
+    @abstractmethod
     def init(self):
         pass
+    @abstractmethod
     async def update(self, context):
         pass
+    @abstractmethod
     async def send(self, message):
         pass
+    @abstractmethod
     async def close(self):
         pass
 
