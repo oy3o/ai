@@ -3,9 +3,9 @@ from oy3opy.utils.string import errString
 
 @subscribe()
 class Model(Interface):
-    def __init__(self, cookie, listeners, proxies):
+    def __init__(self, cookie:dict, listeners:dict, proxies:dict):
         self.cookie = cookie
-        self.listeners = listeners
+        self.eventshub = listeners
         self.proxies = proxies
         self.context = ''
         self.chat = None

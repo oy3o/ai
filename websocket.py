@@ -28,7 +28,7 @@ async def handler(socket):
             else:
                 prompt = message.get('prompt')
                 if prompt:
-                    ai = AI(Model(model)(cookie, dict.fromkeys(Events(model), event_sender(socket, model)), _proxies))
+                    ai = AI(Model(model)(cookie, dict.fromkeys(Events(model), [event_sender(socket, model)]), _proxies))
                     await send(socket, message, ai)
                     await ai.close()
     except: # websocket close
@@ -64,7 +64,7 @@ async def _handler(socket, _ai, message, id, model, cookie):
     if cookie:
         if _ai.get(id):
             await _ai[id].close()
-        _ai[id] = AI(Model(model)(cookie, dict.fromkeys(Events(model), event_sender(socket, model)), _proxies))
+        _ai[id] = AI(Model(model)(cookie, dict.fromkeys(Events(model), [event_sender(socket, model)]), _proxies))
     if not _ai.get(id):
         await socket.send('{"type":"error", "id":"'+ id +'", "message":"model is not initialized"}')
         return

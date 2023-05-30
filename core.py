@@ -12,12 +12,19 @@ def Model(model:str):
     return None
 
 class Chat:
-    def __init__(self, model, cookie, listeners, proxy):
-        self.ai = AI(Model(model)(cookie, listeners, {_: proxy for _ in ['http://','https://']} if proxy else {}))
+    def __init__(self, model:str, cookie:dict, listeners:dict, proxy:str):
+        self.model = model
+        self.context = None
+        self.messages = []
+        self.ai = AI(Model(model)(cookie, listeners, ({scheme: proxy for scheme in ['http://','https://']} if type(proxy) == str else proxy) if proxy else {}))
     async def update(self, context):
         await self.ai.model._update(context)
+        self.context = context
     async def send(self, message):
+        turn = {'prompt':message, 'context':self.context,'answer':''}
+        self.messages.append(turn)
         async for chunk in self.ai.model._send(message):
+            turn['answer'] += chunk
             yield chunk
     async def send_once(self, message):
         response = ''
@@ -27,7 +34,7 @@ class Chat:
     async def close(self):
         await self.ai.close()
 
-class _Config:
+class Config:
     def __init__(self, data:dict[str,dict or str]={}):
         self.model:str = data.get('model') or 'bing'
         self.context:str = data.get('context') or ''
@@ -38,19 +45,18 @@ class _Config:
         self.proxies:dict[str,str] = data.get('proxies') or {}
         self.listeners:dict[str,dict] = data.get('listeners') or {}
 
-class Config(_Config):
-    def __init__(self, data:dict[str,dict or str]={}):
-        self.real = _Config(data)
-
     def __getattribute__(self, name):
-        proxy = self.proxies.get(name) or self.proxy
-        return getattr(self.real, name, {
-            'model': name,
-            'context': self.contexts.get(name) or self.context,
-            'cookie': self.cookies.get(name) or self.cookie,
-            'proxies': {_: proxy for _ in ['http://','https://']} if proxy else {},
-            'listeners': self.listeners.get(name) or {},
-        })
+        try:
+            return object.__getattribute__(self, name)
+        except:
+            proxy = object.__getattribute__(self, 'proxies').get(name) or object.__getattribute__(self, 'proxy')
+            return {
+                'model': name,
+                'context': object.__getattribute__(self, 'contexts').get(name) or object.__getattribute__(self, 'context'),
+                'cookie': object.__getattribute__(self, 'cookies').get(name) or object.__getattribute__(self, 'cookie'),
+                'proxies': {_: proxy for _ in ['http://','https://']} if proxy else {},
+                'listeners': object.__getattribute__(self, 'listeners').get(name) or {},
+            }
 
 config = Config()
 

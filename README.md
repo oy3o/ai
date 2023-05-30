@@ -5,15 +5,14 @@ python api to access multiple with chat mode or not
 ### chat mode
 you can use api as chat mode ( stream or one message), with chat context.
 ```py
-from oy3opy.ai import Chat
-from oy3opy.ai.bing import events
+from oy3opy.ai import Chat, Events
 from oy3opy.utils.file import io
 import asyncio
 import json
 
 with io('cookie.json') as f:
     cookie = dict([(c['name'], c['value']) for c in json.load(f)])
-listeners = dict.fromkeys(events, print)
+listeners = dict.fromkeys(Events('bing'), [print])
 proxy = 'http://127.0.0.1:1081'
 
 async def main():
@@ -114,7 +113,7 @@ while True:
     --cookie  'path/your/cookie'
     --proxy   'http://127.0.0.1:1081'
     --config  'path/your/config'
-    --loads   'path/your/save'
+    --load   'path/your/save'
 ```
 
 ### interactive cli
