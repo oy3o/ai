@@ -205,6 +205,7 @@ class InteractiveCLI:
         if self.inputing is not None:
             self.inputing.render()
 
+    @throttle(0.25)
     def update_editing(self, index, newItem, oldItem):
         if self.editing == index:
             text:str = newItem.body.content[0].data

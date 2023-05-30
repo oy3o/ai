@@ -142,3 +142,5 @@ while True:
 let's try to first chat, enter 'chat help' to access interactive guide
 
 ```
+
+*message display update throttle 0.25s, i think someone may want to know it, it define on line 208*
