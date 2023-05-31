@@ -16,7 +16,7 @@ listeners = dict.fromkeys(Events('bing'), [print])
 proxy = 'http://127.0.0.1:1081'
 
 async def main():
-    chat = Chat('bing', cookie, listeners, proxies)
+    chat = Chat('bing', cookie, listeners, proxy)
     await chat.update('current time: 2024-05-20 00:00:00')
     # stream
     async for chunk in chat.send('what is the time on page?'):
