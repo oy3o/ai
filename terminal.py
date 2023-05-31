@@ -1,6 +1,6 @@
 from oy3opy import *
 from oy3opy.utils.terminal import curses, color
-from oy3opy.utils.string import tojson, errString, splitstrings_bywidth
+from oy3opy.utils.string import tojson, errString
 from oy3opy.utils.file import trytouch, loads, dumps
 from oy3opy.dataflow import Flow
 from oy3opy.dataflow.ternimal import App as MessageViewer
