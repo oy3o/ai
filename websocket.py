@@ -56,6 +56,7 @@ async def send(socket, message, ai):
             'prompt': prompt,
         }):
             await socket.send(tojson({'type':'message', 'message': chunk}))
+        await socket.send(tojson({'type':'signal', 'message': 'done'}))
     except Exception as e:
         await socket.send(tojson({'type':'error', 'message': errString(e)}))
 

@@ -112,6 +112,18 @@ while True:
     else:
         print(message)
 ```
+### demo client of javascript
+```js
+let message = document.querySelector('#message')
+message.value = ''
+
+chat = await new Chat(chat_name, endpoint, 'bing', { '_U': cookie })
+chat.onmessage = chunk => message.value += chunk;
+chat.onevent = (e, content) => message.value += `\n\nevent: ${e}\nmessage: ${content}\n`;
+chat.onsignal = signal => message.value += `\n\n----------\nsignal message: ${signal}\n----------\n`;
+chat.send(message.value)
+```
+
 
 ## Terminal command
 ### commandline

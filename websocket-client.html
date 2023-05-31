@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<style>
+		html,
+		body {
+			margin: 0;
+			padding: 0;
+		}
+	</style>
+</head>
+
+<body style='user-select: none;'>
+	<textarea id='message'
+		style='height: 50vh;width: 50vw;user-select: none;'>(delete prompt) enter endpoint: ws://127.0.0.1:8443</textarea>
+	<button onclick='send()'>send</button>
+	<script src='./websocket-client.js'></script>
+	<script>
+		let message = document.querySelector('#message')
+		let endpoint = null
+		let cookie = null
+		let chat = null
+		async function send() {
+			if (!endpoint) {
+				endpoint = message.value
+				message.value = '(delete prompt) enter _U'
+			} else if (!cookie) {
+				cookie = message.value
+				message.value = 'initing...'
+				chat = await new Chat('0', endpoint, 'bing', { '_U': cookie })
+				message.value = ''
+				chat.onmessage = chunk => message.value += chunk;
+				chat.onevent = (e, content) => message.value += `\n\nevent: ${e}\nmessage: ${content}\n`;
+				chat.onsignal = signal => message.value += `\n\n----------\nsignal message: ${signal}\n----------\n`;
+			} else {
+				chat.send(message.value)
+				message.value = ''
+			}
+		}
+	</script>
+</body>
+
+</html>
